@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Lecteur de Carte d'Identité</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 2em; background: #f4f4f4; }
+    input, button { margin: 10px 0; }
+    pre { background: #fff; padding: 10px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+
+  <h2>Uploader une Carte d'Identité</h2>
+  <input type="file" id="id-card-input" accept="image/*"><br>
+  <button onclick="analyserCarte()">Analyser</button>
+
+  <h3>Texte extrait :</h3>
+  <pre id="output">Aucun texte pour l'instant…</pre>
+
+  <script>
+    // ⚙️ Config Supabase
+    const SUPABASE_URL = "https://ayrljfcrhcvhexfdbjln.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5cmxqZmNyaGN2aGV4ZmRiamxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1MTk3NzYsImV4cCI6MjA2MjA5NTc3Nn0.pLAjYhwJF_8vk5VzN4vKihJLK9m0Xgti9SVYuvWQuBo";
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const API_KEY = 'K84044132288957';
+    const API_URL = 'https://api.ocr.space/parse/image';
+
+    let imageFile;
+
+    document.getElementById('id-card-input').addEventListener('change', function (e) {
+      imageFile = e.target.files[0];
+    });
+
+    function extractInfoFromOCR(ocrText) {
+      const lines = ocrText.split('\n');
+      let nom = '';
+      let prenoms = '';
+      let dateNaissance = '';
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        // Extract Nom
+        if (line.includes('NOM') && !line.includes('USAGE')) {
+          if (i + 1 < lines.length) {
+            nom = lines[i + 1].trim();
+          }
+        }
+        
+        // Extract Prénoms
+        if (line.includes('Prénoms') || line.includes('Given names') || line.includes('Prencms')) {
+          if (i + 1 < lines.length) {
+            prenoms = lines[i + 1].trim();
+          }
+        }
+        
+        // Extract Date de naissance
+        if (line.includes('DATE DE NAISS') || line.includes('Date of birth')) {
+          // Try to find date in the format DD MM YYYY
+          const dateMatch = line.match(/\d{2}\s\d{2}\s\d{4}/);
+          if (dateMatch) {
+            dateNaissance = dateMatch[0].replace(/\s/g, '/');
+          } else if (i + 1 < lines.length) {
+            // Check next line if date is on separate line
+            const nextLine = lines[i + 1].trim();
+            const nextLineDateMatch = nextLine.match(/\d{2}\s\d{2}\s\d{4}/);
+            if (nextLineDateMatch) {
+              dateNaissance = nextLineDateMatch[0].replace(/\s/g, '/');
+            }
+          }
+        }
+      }
+      
+      return {
+        nom: nom,
+        prenoms: prenoms,
+        date_naissance: dateNaissance
+      };
+    }
+
+    async function analyserCarte() {
+      if (!imageFile) {
+        alert("Merci de choisir une image.");
+        return;
+      }
+
+      const resultDiv = document.getElementById('output');
+      resultDiv.textContent = 'Processing...';
+      
+      try {
+        const formData = new FormData();
+        formData.append('file', imageFile);
+        formData.append('apikey', API_KEY);
+        formData.append('language', 'fre');
+        formData.append('isOverlayRequired', 'false');
+        formData.append('OCREngine', '2'); // Using engine 2 for better results
+        
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.IsErroredOnProcessing) {
+          resultDiv.textContent = 'Error: ' + data.ErrorMessage;
+          return;
+        }
+        
+        const extractedText = data.ParsedResults[0].ParsedText;
+        resultDiv.textContent = extractedText;
+        
+        // Extract only the needed information
+        const info = extractInfoFromOCR(extractedText);
+        
+        // Display extracted info
+        console.log("Extracted Info:", info);
+        
+        // 💾 Enregistrement dans Supabase
+        const { error } = await supabaseClient
+          .from("cartes_id")
+          .insert([{
+            nom: info.nom,
+            prenom: info.prenoms,
+            date_naissance: info.date_naissance
+          }]);
+        
+        if (error) {
+          alert("Erreur lors de l'enregistrement : " + error.message);
+        } else {
+          alert(`✅ Données enregistrées avec succès !
+Nom: ${info.nom}
+Prénoms: ${info.prenoms}
+Date de naissance: ${info.date_naissance}`);
+        }
+      } catch (error) {
+        resultDiv.textContent = 'Error: ' + error.message;
+        console.error(error);
+      }
+    }
+  </script>
+</body>
+</html>
