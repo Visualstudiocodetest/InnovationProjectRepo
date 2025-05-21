@@ -225,4 +225,7 @@
         resultDiv.textContent = 'Error: ' + error.message;
         console.error(error);
       }
+
+      //redirection vers la liste des personnes
+        window.location.href = "/InnovationProject/list_customers";
     }

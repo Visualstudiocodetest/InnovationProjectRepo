@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des clients</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #add-button-container, #search-container {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        #add-person-button {
+            padding: 10px 20px;
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        #add-person-button:hover {
+            background-color: #4cae4c;
+        }
+        #search-input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 50%;
+            max-width: 300px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th {
+            background-color: #f0f0f0;
+            cursor: pointer;
+            user-select: none;
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+            position: relative;
+        }
+        th button {
+            background: none;
+            border: none;
+            padding: 0;
+            margin-left: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+            opacity: 0.6;
+        }
+        th button:hover {
+            opacity: 1;
+        }
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .image-preview {
+            max-width: 80px; /* Réduire un peu la taille pour faire de la place aux boutons */
+            height: auto;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+        .action-buttons button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+        .edit-button {
+            background-color: #f0ad4e;
+            color: white;
+        }
+        .delete-button {
+            background-color: #d9534f;
+            color: white;
+        }
+        .loading {
+            text-align: center;
+            font-style: italic;
+            color: #777;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Données de votre table Supabase</h1>
+        <div id="add-button-container">
+            <button id="add-person-button">Ajouter une personne</button>
+        </div>
+        <div id="search-container">
+            <input type="text" id="search-input" placeholder="Rechercher par nom, prénom...">
+        </div>
+        <div id="data-container">
+            <p class="loading">Chargement des données...</p>
+        </div>
+        <p id="error-message" class="error" style="display: none;"></p>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://ayrljfcrhcvhexfdbjln.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5cmxqZmNyaGN2aGV4ZmRiamxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1MTk3NzYsImV4cCI6MjA2MjA5NTc3Nn0.pLAjYhwJF_8vk5VzN4vKihJLK9m0Xgti9SVYuvWQuBo";
+        const dataContainer = document.getElementById('data-container');
+        const errorMessage = document.getElementById('error-message');
+        const searchInput = document.getElementById('search-input');
+        const addPersonButton = document.getElementById('add-person-button');
+        let allData = [];
+
+        addPersonButton.addEventListener('click', () => {
+            window.location.href = '/InnovationProject/add_person'; // Redirection vers la page d'ajout
+        });
+
+        async function fetchData() {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/cartes_id?select=id,nom,prenom,date_naissance,photo1_url,photo2_url,url_id_card`, { // Sélectionner l'ID maintenant
+                    method: 'GET',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erreur de requête: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data && data.length > 0) {
+                    allData = data;
+                    renderTable(data);
+                } else {
+                    dataContainer.innerHTML = '<p>Aucune donnée trouvée dans la table.</p>';
+                }
+
+            } catch (error) {
+                console.error("Erreur lors de la récupération des données:", error);
+                dataContainer.style.display = 'none';
+                errorMessage.textContent = "Une erreur est survenue lors du chargement des données.";
+                errorMessage.style.display = 'block';
+            }
+        }
+
+        function renderTable(data) {
+            dataContainer.innerHTML = '';
+
+            if (data.length === 0) {
+                dataContainer.innerHTML = '<p>Aucun résultat trouvé.</p>';
+                return;
+            }
+
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            const tbody = document.createElement('tbody');
+            const headersConfig = [
+                { label: "Nom", key: "nom", sortable: true },
+                { label: "Prénom", key: "prenom", sortable: true },
+                { label: "Date de naissance", key: "date_naissance", sortable: true },
+                { label: "Photo 1", key: "photo1_url", sortable: false },
+                { label: "Photo 2", key: "photo2_url", sortable: false },
+                { label: "URL Carte ID", key: "url_id_card", sortable: false },
+                { label: "Actions", key: "actions", sortable: false } // Nouvelle colonne pour les boutons
+            ];
+
+            const headerRow = document.createElement('tr');
+            headersConfig.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header.label;
+                if (header.sortable) {
+                    const ascButton = document.createElement('button');
+                    ascButton.textContent = '▲';
+                    ascButton.title = `Trier par ${header.label} (ascendant)`;
+                    ascButton.addEventListener('click', () => sortData(header.key, 'asc'));
+                    th.appendChild(ascButton);
+
+                    const descButton = document.createElement('button');
+                    descButton.textContent = '▼';
+                    descButton.title = `Trier par ${header.label} (descendant)`;
+                    descButton.addEventListener('click', () => sortData(header.key, 'desc'));
+                    th.appendChild(descButton);
+                }
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            data.forEach(rowData => {
+                const tr = document.createElement('tr');
+
+                const nomTd = document.createElement('td');
+                nomTd.textContent = rowData.nom;
+                tr.appendChild(nomTd);
+
+                const prenomTd = document.createElement('td');
+                prenomTd.textContent = rowData.prenom;
+                tr.appendChild(prenomTd);
+
+                const dateNaissanceTd = document.createElement('td');
+                dateNaissanceTd.textContent = rowData.date_naissance;
+                tr.appendChild(dateNaissanceTd);
+
+                const photo1Td = document.createElement('td');
+                if (rowData.photo1_url) {
+                    const img1 = document.createElement('img');
+                    img1.src = rowData.photo1_url;
+                    img1.alt = `Photo 1 de ${rowData.prenom} ${rowData.nom}`;
+                    img1.classList.add('image-preview');
+                    photo1Td.appendChild(img1);
+                } else {
+                    photo1Td.textContent = 'Pas de photo';
+                }
+                tr.appendChild(photo1Td);
+
+                const photo2Td = document.createElement('td');
+                if (rowData.photo2_url) {
+                    const img2 = document.createElement('img');
+                    img2.src = rowData.photo2_url;
+                    img2.alt = `Photo 2 de ${rowData.prenom} ${rowData.nom}`;
+                    img2.classList.add('image-preview');
+                    photo2Td.appendChild(img2);
+                } else {
+                    photo2Td.textContent = 'Pas de photo';
+                }
+                tr.appendChild(photo2Td);
+
+                const urlIdCardTd = document.createElement('td');
+                if (rowData.url_id_card) {
+                    const link = document.createElement('a');
+                    link.href = rowData.url_id_card;
+                    link.textContent = 'Voir la carte';
+                    link.target = '_blank';
+                    urlIdCardTd.appendChild(link);
+                } else {
+                    urlIdCardTd.textContent = 'Pas de lien';
+                }
+                tr.appendChild(urlIdCardTd);
+
+                // Colonne pour les boutons d'action
+                const actionsTd = document.createElement('td');
+                actionsTd.classList.add('action-buttons');
+
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Éditer';
+                editButton.classList.add('edit-button');
+                // Ajouter ici la logique pour l'édition (par exemple, un écouteur d'événement)
+                // qui pourrait rediriger vers une page d'édition avec l'ID de la personne
+                // editButton.addEventListener('click', () => { /* Logique d'édition */ });
+                actionsTd.appendChild(editButton);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Supprimer';
+                deleteButton.classList.add('delete-button');
+                // Ajouter ici la logique pour la suppression (par exemple, un écouteur d'événement)
+                // qui enverrait une requête DELETE à votre API Supabase avec l'ID de la personne
+                // deleteButton.addEventListener('click', () => { /* Logique de suppression */ });
+                actionsTd.appendChild(deleteButton);
+
+                tr.appendChild(actionsTd);
+
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+
+            dataContainer.appendChild(table);
+        }
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const filteredData = allData.filter(item =>
+                (item.nom && item.nom.toLowerCase().includes(searchTerm)) ||
+                (item.prenom && item.prenom.toLowerCase().includes(searchTerm))
+            );
+            renderTable(filteredData);
+        });
+
+        function sortData(columnKey, direction) {
+            let sortedData = [...allData];
+
+            sortedData.sort((a, b) => {
+                let valueA = a[columnKey];
+                let valueB = b[columnKey];
+
+                if (columnKey === 'date_naissance') {
+                    valueA = new Date(valueA);
+                    valueB = new Date(valueB);
+                } else if (typeof valueA === 'string') {
+                    valueA = valueA.toLowerCase();
+                    valueB = valueB.toLowerCase();
+                }
+
+                if (direction === 'asc') {
+                    if (valueA < valueB) return -1;
+                    if (valueA > valueB) return 1;
+                    return 0;
+                } else if (direction === 'desc') {
+                    if (valueA < valueB) return 1;
+                    if (valueA > valueB) return -1;
+                    return 0;
+                }
+                return 0;
+            });
+            renderTable(sortedData);
+        }
+
+        fetchData();
+    </script>
+</body>
+</html>
