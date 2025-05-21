@@ -189,6 +189,7 @@
                 { label: "Photo 2", key: "photo2_url", sortable: false },
                 { label: "URL Carte ID", key: "url_id_card", sortable: false },
                 { label: "Actions", key: "actions", sortable: false } // Nouvelle colonne pour les boutons
+                { label: "Actions", key: "actions", sortable: false }
             ];
 
             const headerRow = document.createElement('tr');
@@ -215,6 +216,7 @@
 
             data.forEach(rowData => {
                 const tr = document.createElement('tr');
+                tr.dataset.id = rowData.id; // Stocker l'ID de la ligne dans l'attribut data
 
                 const nomTd = document.createElement('td');
                 nomTd.textContent = rowData.nom;
@@ -264,33 +266,64 @@
                 }
                 tr.appendChild(urlIdCardTd);
 
-                // Colonne pour les boutons d'action
                 const actionsTd = document.createElement('td');
                 actionsTd.classList.add('action-buttons');
 
                 const editButton = document.createElement('button');
                 editButton.textContent = 'Éditer';
                 editButton.classList.add('edit-button');
-                // Ajouter ici la logique pour l'édition (par exemple, un écouteur d'événement)
-                // qui pourrait rediriger vers une page d'édition avec l'ID de la personne
-                // editButton.addEventListener('click', () => { /* Logique d'édition */ });
+                editButton.addEventListener('click', () => {
+                    const id = tr.dataset.id;
+                    // Rediriger vers une page d'édition avec l'ID
+                    window.location.href = `/InnovationProject/edit_person?id=${id}`;
+                });
                 actionsTd.appendChild(editButton);
 
                 const deleteButton = document.createElement('button');
                 deleteButton.textContent = 'Supprimer';
                 deleteButton.classList.add('delete-button');
-                // Ajouter ici la logique pour la suppression (par exemple, un écouteur d'événement)
-                // qui enverrait une requête DELETE à votre API Supabase avec l'ID de la personne
-                // deleteButton.addEventListener('click', () => { /* Logique de suppression */ });
+                deleteButton.addEventListener('click', () => {
+                    const id = tr.dataset.id;
+                    if (confirm("Êtes-vous sûr de vouloir supprimer cette personne ?")) {
+                        deletePerson(id);
+                    }
+                });
+
                 actionsTd.appendChild(deleteButton);
-
                 tr.appendChild(actionsTd);
-
                 tbody.appendChild(tr);
             });
             table.appendChild(tbody);
 
             dataContainer.appendChild(table);
+        }
+
+        async function deletePerson(id) {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/cartes_id?id=eq.${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=minimal' // Indique à Supabase de ne pas retourner le contenu supprimé
+                    }
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(`Erreur lors de la suppression: ${response.status} - ${JSON.stringify(error)}`);
+                }
+
+                // Si la suppression réussit, rechargez les données pour mettre à jour la table
+                fetchData();
+                alert(`La personne avec l'ID ${id} a été supprimée.`);
+
+            } catch (error) {
+                console.error("Erreur lors de la suppression de la personne:", error);
+                errorMessage.textContent = `Erreur lors de la suppression: ${error.message}`;
+                errorMessage.style.display = 'block';
+            }
         }
 
         searchInput.addEventListener('input', function() {
@@ -310,8 +343,14 @@
                 let valueB = b[columnKey];
 
                 if (columnKey === 'date_naissance') {
-                    valueA = new Date(valueA);
-                    valueB = new Date(valueB);
+                    // Convertir le format DD/MM/YYYY en YYYY-MM-DD pour une interprétation correcte par new Date()
+                    const [dayA, monthA, yearA] = valueA.split('/');
+                    const isoDateA = `${yearA}-${monthA}-${dayA}`;
+                    valueA = new Date(isoDateA);
+
+                    const [dayB, monthB, yearB] = valueB.split('/');
+                    const isoDateB = `${yearB}-${monthB}-${dayB}`;
+                    valueB = new Date(isoDateB);
                 } else if (typeof valueA === 'string') {
                     valueA = valueA.toLowerCase();
                     valueB = valueB.toLowerCase();
