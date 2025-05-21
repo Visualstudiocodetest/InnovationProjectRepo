@@ -75,16 +75,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return labeledFaceDescriptors;
   }
 
-  // Define a mapping between names (from Supabase) and URLs
-  const nameToUrl = {
-    "Mathieu": "https://www.example.com/mathieu",
-    "Frank": "https://www.example.com/frank",
-    "Alex": "https://www.example.com/alex",
-    "Shayaan": "https://www.example.com/shayaan",
-    "unknown": "https://www.example.com/unknown",
-    // Add more mappings as needed, ensure these match the 'nom' in your Supabase table
-  };
-
   video.addEventListener("play", async () => {
     const labeledFaceDescriptors = await getLabeledFaceDescriptionsFromSupabase();
     const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors);
@@ -124,12 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
             y >= labelY - textHeight &&
             y <= labelY
           ) {
-            const url = nameToUrl[name];
-            if (url) {
-              window.open(url, "_blank"); // Open the URL in a new tab
-            } else {
-              console.warn(`No URL defined for name: ${name}`);
-            }
+            window.open(`https://www.example.com/${name}`, "_blank"); // Open the URL in a new tab
           }
         });
       }
