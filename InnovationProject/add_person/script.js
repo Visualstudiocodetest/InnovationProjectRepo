@@ -1,6 +1,6 @@
 // ⚙️ Config Supabase
     const SUPABASE_URL = "https://ayrljfcrhcvhexfdbjln.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5cmxqZmNyaGN2aGV4ZmRiamxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1MTk3NzYsImV4cCI6MjA2MjA5NTc3Nn0.pLAjYhwJF_8vk5VzN4vKihJLK9m0Xgti9SVYuvWQuBo";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5cmxqZmNyaGN2aGV4ZmRiamxuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NjUxOTc3NiwiZXhwIjoyMDYyMDk1Nzc2fQ.dKfQ2E23n4DOw6qc9vksbxuJxoGxSyEfVw-NS6Rly9o";
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const API_KEY = 'K84044132288957';
     const API_URL = 'https://api.ocr.space/parse/image';
@@ -122,29 +122,41 @@
 }
 
     async function uploadImage(file, imageName) {
-      try {
-        const { data, error } = await supabaseClient
-          .storage
-          .from(BUCKET_NAME)
-          .upload(imageName, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
+  try {
+    const { data, error } = await supabaseClient
+      .storage
+      .from(BUCKET_NAME)
+      .upload(imageName, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
 
-        if (error) {
-          console.error("Erreur lors de l'upload de l'image:", error);
-          alert(`Erreur lors de l'upload de l'image ${imageName}: ${error.message}`);
-          return null;
-        }
-
-        const imageUrl = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${data.path}`;
-        return imageUrl;
-      } catch (error) {
-        console.error("Erreur inattendue lors de l'upload de l'image:", error);
-        alert(`Erreur inattendue lors de l'upload de l'image ${imageName}: ${error.message}`);
-        return null;
-      }
+    if (error) {
+      console.error("Erreur lors de l'upload de l'image:", error);
+      alert(`Erreur lors de l'upload de l'image ${imageName}: ${error.message}`);
+      return null;
     }
+
+    // Génère une URL signée valable 60 secondes
+    const { data: signedUrlData, error: signedUrlError } = await supabaseClient
+      .storage
+      .from(BUCKET_NAME)
+      .createSignedUrl(data.path, 60000000000000000000); // 60 secondes de validité
+
+    if (signedUrlError) {
+      console.error("Erreur lors de la création de l'URL signée:", signedUrlError);
+      alert(`Erreur lors de la création de l'URL signée pour ${imageName}: ${signedUrlError.message}`);
+      return null;
+    }
+
+    return signedUrlData.signedUrl;
+  } catch (error) {
+    console.error("Erreur inattendue lors de l'upload de l'image:", error);
+    alert(`Erreur inattendue lors de l'upload de l'image ${imageName}: ${error.message}`);
+    return null;
+  }
+}
+
 
     async function analyserEtEnregistrer() {
       if (!idCardFile || !photo1File || !photo2File) {

@@ -3,7 +3,7 @@ const video = document.getElementById("video");
 // Wait for the DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', () => {
   const SUPABASE_URL = "https://ayrljfcrhcvhexfdbjln.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5cmxqZmNyaGN2aGV4ZmRiamxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1MTk3NzYsImV4cCI6MjA2MjA5NTc3Nn0.pLAjYhwJF_8vk5VzN4vKihJLK9m0Xgti9SVYuvWQuBo";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5cmxqZmNyaGN2aGV4ZmRiamxuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NjUxOTc3NiwiZXhwIjoyMDYyMDk1Nzc2fQ.dKfQ2E23n4DOw6qc9vksbxuJxoGxSyEfVw-NS6Rly9o";
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   Promise.all([
@@ -27,53 +27,76 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function getLabeledFaceDescriptionsFromSupabase() {
-    let { data , error } = await supabase
+  const { data, error } = await supabase
     .from('cartes_id')
     .select("nom, photo1_url, photo2_url");
 
-    if (error) {
-      console.error("Error fetching data from Supabase:", error);
-      return [];
-    }
-
-    const labeledFaceDescriptors = [];
-    for (const person of data) {
-      const { nom, photo1_url, photo2_url } = person;
-      const descriptions = [];
-      try {
-        if (photo1_url) {
-          const img1 = await faceapi.fetchImage(photo1_url);
-          const detection1 = await faceapi
-            .detectSingleFace(img1)
-            .withFaceLandmarks()
-            .withFaceDescriptor();
-          if (detection1) {
-            descriptions.push(detection1.descriptor);
-          }
-        }
-        if (photo2_url) {
-          const img2 = await faceapi.fetchImage(photo2_url);
-          const detection2 = await faceapi
-            .detectSingleFace(img2)
-            .withFaceLandmarks()
-            .withFaceDescriptor();
-          if (detection2) {
-            descriptions.push(detection2.descriptor);
-          }
-        }
-        if (descriptions.length > 0) {
-          labeledFaceDescriptors.push(
-            new faceapi.LabeledFaceDescriptors(nom, descriptions)
-          );
-        } else {
-          console.warn(`No face detected in images for ${nom}`);
-        }
-      } catch (error) {
-        console.error(`Error processing images for ${nom}:`, error);
-      }
-    }
-    return labeledFaceDescriptors;
+  if (error) {
+    console.error("Erreur lors de la récupération des données Supabase:", error);
+    return [];
   }
+
+  const labeledFaceDescriptors = [];
+
+  for (const person of data) {
+    const { nom, photo1_url, photo2_url } = person;
+    const descriptions = [];
+
+    try {
+      const signedUrls = [];
+
+      if (photo1_url) {
+        const path = photo1_url.split("/").slice(-1)[0]; // extrait le nom du fichier
+        const { data: signed1, error: err1 } = await supabase
+          .storage
+          .from('photos-identite')
+          .createSignedUrl(path, 60); // 60 secondes
+
+        if (!err1) {
+          signedUrls.push(signed1.signedUrl);
+        }
+      }
+
+      if (photo2_url) {
+        const path = photo2_url.split("/").slice(-1)[0]; // extrait le nom du fichier
+        const { data: signed2, error: err2 } = await supabase
+          .storage
+          .from('photos-identite')
+          .createSignedUrl(path, 60);
+
+        if (!err2) {
+          signedUrls.push(signed2.signedUrl);
+        }
+      }
+
+      for (const url of signedUrls) {
+        const img = await faceapi.fetchImage(url);
+        const detection = await faceapi
+          .detectSingleFace(img)
+          .withFaceLandmarks()
+          .withFaceDescriptor();
+
+        if (detection) {
+          descriptions.push(detection.descriptor);
+        }
+      }
+
+      if (descriptions.length > 0) {
+        labeledFaceDescriptors.push(
+          new faceapi.LabeledFaceDescriptors(nom, descriptions)
+        );
+      } else {
+        console.warn(`Aucun visage détecté pour ${nom}`);
+      }
+
+    } catch (error) {
+      console.error(`Erreur lors du traitement des images pour ${nom}:`, error);
+    }
+  }
+
+  return labeledFaceDescriptors;
+}
+
 
   video.addEventListener("play", async () => {
     const labeledFaceDescriptors = await getLabeledFaceDescriptionsFromSupabase();

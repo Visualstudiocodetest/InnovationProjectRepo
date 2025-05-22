@@ -4,112 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Liste des clients</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-        }
-        .container {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        #add-button-container, #search-container {
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        #add-person-button {
-            padding: 10px 20px;
-            background-color: #5cb85c;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1em;
-        }
-        #add-person-button:hover {
-            background-color: #4cae4c;
-        }
-        #search-input {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            width: 50%;
-            max-width: 300px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        th {
-            background-color: #f0f0f0;
-            cursor: pointer;
-            user-select: none;
-            padding: 8px;
-            border: 1px solid #ddd;
-            text-align: left;
-            position: relative;
-        }
-        th button {
-            background: none;
-            border: none;
-            padding: 0;
-            margin-left: 5px;
-            cursor: pointer;
-            font-size: 0.8em;
-            opacity: 0.6;
-        }
-        th button:hover {
-            opacity: 1;
-        }
-        td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        .image-preview {
-            max-width: 80px; /* Réduire un peu la taille pour faire de la place aux boutons */
-            height: auto;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 5px;
-            justify-content: center;
-        }
-        .action-buttons button {
-            padding: 5px 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.8em;
-        }
-        .edit-button {
-            background-color: #f0ad4e;
-            color: white;
-        }
-        .delete-button {
-            background-color: #d9534f;
-            color: white;
-        }
-        .loading {
-            text-align: center;
-            font-style: italic;
-            color: #777;
-        }
-        .error {
-            color: red;
-            text-align: center;
-            margin-top: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
@@ -124,253 +19,61 @@
             <p class="loading">Chargement des données...</p>
         </div>
         <p id="error-message" class="error" style="display: none;"></p>
+        <div id="edit-form-container" style="display: none;">
+            <h2>Éditer la personne</h2>
+            <form id="edit-form">
+                <input type="hidden" id="edit-id">
+                <div class="form-group">
+                    <label for="edit-nom">Nom:</label>
+                    <input type="text" id="edit-nom">
+                </div>
+                <div class="form-group">
+                    <label for="edit-prenom">Prénom:</label>
+                    <input type="text" id="edit-prenom">
+                </div>
+                <div class="form-group">
+                    <label for="edit-date_naissance">Date de naissance:</label>
+                    <input type="text" id="edit-date_naissance" placeholder="JJ/MM/AAAA">
+                </div>
+                <div class="form-group">
+                    <label for="edit-photo1_url">URL Photo 1:</label>
+                    <input type="url" id="edit-photo1_url">
+                </div>
+                <div class="form-group">
+                    <label for="edit-photo2_url">URL Photo 2:</label>
+                    <input type="url" id="edit-photo2_url">
+                </div>
+                <div class="form-group">
+                    <label for="edit-url_id_card">URL Carte ID:</label>
+                    <input type="url" id="edit-url_id_card">
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="save-edit-button" class="save-button">Sauvegarder</button>
+                    <button type="button" id="cancel-edit-button" class="cancel-button">Annuler</button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <script>
-        const SUPABASE_URL = "https://ayrljfcrhcvhexfdbjln.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5cmxqZmNyaGN2aGV4ZmRiamxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY1MTk3NzYsImV4cCI6MjA2MjA5NTc3Nn0.pLAjYhwJF_8vk5VzN4vKihJLK9m0Xgti9SVYuvWQuBo";
-        const dataContainer = document.getElementById('data-container');
-        const errorMessage = document.getElementById('error-message');
-        const searchInput = document.getElementById('search-input');
-        const addPersonButton = document.getElementById('add-person-button');
-        let allData = [];
+    <div id="confirm-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <p id="confirm-message"></p>
+            <div class="modal-actions">
+                <button id="confirm-yes" class="modal-button confirm-yes">Oui</button>
+                <button id="confirm-no" class="modal-button confirm-no">Non</button>
+            </div>
+        </div>
+    </div>
 
-        addPersonButton.addEventListener('click', () => {
-            window.location.href = '/InnovationProject/add_person'; // Redirection vers la page d'ajout
-        });
+    <div id="message-box" class="modal" style="display: none;">
+        <div class="modal-content">
+            <p id="message-text"></p>
+            <div class="modal-actions">
+                <button id="message-ok" class="modal-button message-ok">OK</button>
+            </div>
+        </div>
+    </div>
 
-        async function fetchData() {
-            try {
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/cartes_id?select=id,nom,prenom,date_naissance,photo1_url,photo2_url,url_id_card`, { // Sélectionner l'ID maintenant
-                    method: 'GET',
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`,
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Erreur de requête: ${response.status}`);
-                }
-
-                const data = await response.json();
-
-                if (data && data.length > 0) {
-                    allData = data;
-                    renderTable(data);
-                } else {
-                    dataContainer.innerHTML = '<p>Aucune donnée trouvée dans la table.</p>';
-                }
-
-            } catch (error) {
-                console.error("Erreur lors de la récupération des données:", error);
-                dataContainer.style.display = 'none';
-                errorMessage.textContent = "Une erreur est survenue lors du chargement des données.";
-                errorMessage.style.display = 'block';
-            }
-        }
-
-        function renderTable(data) {
-            dataContainer.innerHTML = '';
-
-            if (data.length === 0) {
-                dataContainer.innerHTML = '<p>Aucun résultat trouvé.</p>';
-                return;
-            }
-
-            const table = document.createElement('table');
-            const thead = document.createElement('thead');
-            const tbody = document.createElement('tbody');
-            const headersConfig = [
-                { label: "Nom", key: "nom", sortable: true },
-                { label: "Prénom", key: "prenom", sortable: true },
-                { label: "Date de naissance", key: "date_naissance", sortable: true },
-                { label: "Photo 1", key: "photo1_url", sortable: false },
-                { label: "Photo 2", key: "photo2_url", sortable: false },
-                { label: "URL Carte ID", key: "url_id_card", sortable: false },
-                { label: "Actions", key: "actions", sortable: false } // Nouvelle colonne pour les boutons
-                { label: "Actions", key: "actions", sortable: false }
-            ];
-
-            const headerRow = document.createElement('tr');
-            headersConfig.forEach(header => {
-                const th = document.createElement('th');
-                th.textContent = header.label;
-                if (header.sortable) {
-                    const ascButton = document.createElement('button');
-                    ascButton.textContent = '▲';
-                    ascButton.title = `Trier par ${header.label} (ascendant)`;
-                    ascButton.addEventListener('click', () => sortData(header.key, 'asc'));
-                    th.appendChild(ascButton);
-
-                    const descButton = document.createElement('button');
-                    descButton.textContent = '▼';
-                    descButton.title = `Trier par ${header.label} (descendant)`;
-                    descButton.addEventListener('click', () => sortData(header.key, 'desc'));
-                    th.appendChild(descButton);
-                }
-                headerRow.appendChild(th);
-            });
-            thead.appendChild(headerRow);
-            table.appendChild(thead);
-
-            data.forEach(rowData => {
-                const tr = document.createElement('tr');
-                tr.dataset.id = rowData.id; // Stocker l'ID de la ligne dans l'attribut data
-
-                const nomTd = document.createElement('td');
-                nomTd.textContent = rowData.nom;
-                tr.appendChild(nomTd);
-
-                const prenomTd = document.createElement('td');
-                prenomTd.textContent = rowData.prenom;
-                tr.appendChild(prenomTd);
-
-                const dateNaissanceTd = document.createElement('td');
-                dateNaissanceTd.textContent = rowData.date_naissance;
-                tr.appendChild(dateNaissanceTd);
-
-                const photo1Td = document.createElement('td');
-                if (rowData.photo1_url) {
-                    const img1 = document.createElement('img');
-                    img1.src = rowData.photo1_url;
-                    img1.alt = `Photo 1 de ${rowData.prenom} ${rowData.nom}`;
-                    img1.classList.add('image-preview');
-                    photo1Td.appendChild(img1);
-                } else {
-                    photo1Td.textContent = 'Pas de photo';
-                }
-                tr.appendChild(photo1Td);
-
-                const photo2Td = document.createElement('td');
-                if (rowData.photo2_url) {
-                    const img2 = document.createElement('img');
-                    img2.src = rowData.photo2_url;
-                    img2.alt = `Photo 2 de ${rowData.prenom} ${rowData.nom}`;
-                    img2.classList.add('image-preview');
-                    photo2Td.appendChild(img2);
-                } else {
-                    photo2Td.textContent = 'Pas de photo';
-                }
-                tr.appendChild(photo2Td);
-
-                const urlIdCardTd = document.createElement('td');
-                if (rowData.url_id_card) {
-                    const link = document.createElement('a');
-                    link.href = rowData.url_id_card;
-                    link.textContent = 'Voir la carte';
-                    link.target = '_blank';
-                    urlIdCardTd.appendChild(link);
-                } else {
-                    urlIdCardTd.textContent = 'Pas de lien';
-                }
-                tr.appendChild(urlIdCardTd);
-
-                const actionsTd = document.createElement('td');
-                actionsTd.classList.add('action-buttons');
-
-                const editButton = document.createElement('button');
-                editButton.textContent = 'Éditer';
-                editButton.classList.add('edit-button');
-                editButton.addEventListener('click', () => {
-                    const id = tr.dataset.id;
-                    // Rediriger vers une page d'édition avec l'ID
-                    window.location.href = `/InnovationProject/edit_person?id=${id}`;
-                });
-                actionsTd.appendChild(editButton);
-
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'Supprimer';
-                deleteButton.classList.add('delete-button');
-                deleteButton.addEventListener('click', () => {
-                    const id = tr.dataset.id;
-                    if (confirm("Êtes-vous sûr de vouloir supprimer cette personne ?")) {
-                        deletePerson(id);
-                    }
-                });
-
-                actionsTd.appendChild(deleteButton);
-                tr.appendChild(actionsTd);
-                tbody.appendChild(tr);
-            });
-            table.appendChild(tbody);
-
-            dataContainer.appendChild(table);
-        }
-
-        async function deletePerson(id) {
-            try {
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/cartes_id?id=eq.${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${SUPABASE_KEY}`,
-                        'Content-Type': 'application/json',
-                        'Prefer': 'return=minimal' // Indique à Supabase de ne pas retourner le contenu supprimé
-                    }
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(`Erreur lors de la suppression: ${response.status} - ${JSON.stringify(error)}`);
-                }
-
-                // Si la suppression réussit, rechargez les données pour mettre à jour la table
-                fetchData();
-                alert(`La personne avec l'ID ${id} a été supprimée.`);
-
-            } catch (error) {
-                console.error("Erreur lors de la suppression de la personne:", error);
-                errorMessage.textContent = `Erreur lors de la suppression: ${error.message}`;
-                errorMessage.style.display = 'block';
-            }
-        }
-
-        searchInput.addEventListener('input', function() {
-            const searchTerm = searchInput.value.toLowerCase();
-            const filteredData = allData.filter(item =>
-                (item.nom && item.nom.toLowerCase().includes(searchTerm)) ||
-                (item.prenom && item.prenom.toLowerCase().includes(searchTerm))
-            );
-            renderTable(filteredData);
-        });
-
-        function sortData(columnKey, direction) {
-            let sortedData = [...allData];
-
-            sortedData.sort((a, b) => {
-                let valueA = a[columnKey];
-                let valueB = b[columnKey];
-
-                if (columnKey === 'date_naissance') {
-                    // Convertir le format DD/MM/YYYY en YYYY-MM-DD pour une interprétation correcte par new Date()
-                    const [dayA, monthA, yearA] = valueA.split('/');
-                    const isoDateA = `${yearA}-${monthA}-${dayA}`;
-                    valueA = new Date(isoDateA);
-
-                    const [dayB, monthB, yearB] = valueB.split('/');
-                    const isoDateB = `${yearB}-${monthB}-${dayB}`;
-                    valueB = new Date(isoDateB);
-                } else if (typeof valueA === 'string') {
-                    valueA = valueA.toLowerCase();
-                    valueB = valueB.toLowerCase();
-                }
-
-                if (direction === 'asc') {
-                    if (valueA < valueB) return -1;
-                    if (valueA > valueB) return 1;
-                    return 0;
-                } else if (direction === 'desc') {
-                    if (valueA < valueB) return 1;
-                    if (valueA > valueB) return -1;
-                    return 0;
-                }
-                return 0;
-            });
-            renderTable(sortedData);
-        }
-
-        fetchData();
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
