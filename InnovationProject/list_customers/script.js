@@ -1,6 +1,3 @@
-const SUPABASE_URL = "https://ayrljfcrhcvhexfdbjln.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5cmxqZmNyaGN2aGV4ZmRiamxuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NjUxOTc3NiwiZXhwIjoyMDYyMDk1Nzc2fQ.dKfQ2E23n4DOw6qc9vksbxuJxoGxSyEfVw-NS6Rly9o";
-
 // Get references to main elements
 const dataContainer = document.getElementById('data-container');
 const errorMessage = document.getElementById('error-message');
@@ -88,7 +85,7 @@ function showMessageBox(message) {
 // --- Event Listeners for main actions ---
 
 addPersonButton.addEventListener('click', () => {
-    window.location.href = '/InnovationProject/add_person';
+    window.location.href = '/add_person/index.html';
 });
 
 // --- Data Fetching and Rendering ---
@@ -97,36 +94,9 @@ addPersonButton.addEventListener('click', () => {
  * Fetches data from Supabase and renders the table.
  */
 async function fetchData() {
-    console.log('Fetching data...');
-    try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/cartes_id?select=id,nom,prenom,date_naissance,photo1_url,photo2_url,url_id_card`, {
-            method: 'GET',
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`,
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`Erreur de requête: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('Data fetched successfully:', data);
-
-        if (data && data.length > 0) {
-            allData = data;
-            renderTable(data);
-        } else {
-            dataContainer.innerHTML = '<p>Aucune donnée trouvée dans la table.</p>';
-        }
-
-    } catch (error) {
-        console.error("Erreur lors de la récupération des données:", error);
-        dataContainer.style.display = 'none';
-        errorMessage.textContent = "Une erreur est survenue lors du chargement des données.";
-        errorMessage.style.display = 'block';
-    }
+    fetch('/api/persons')
+    .then(res => res.json())
+    .then(data => renderTable(data));
 }
 
 /**
@@ -314,42 +284,38 @@ saveEditButton.addEventListener('click', async () => {
     console.log('Attempting to save updated data:', updatedData);
 
     try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/cartes_id?id=eq.${editingRowId}`, {
-            method: 'PATCH',
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=representation'
-            },
-            body: JSON.stringify(updatedData)
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`Erreur lors de la mise à jour: ${response.status} - ${JSON.stringify(error)}`);
-        }
-
-        const updatedRecord = await response.json();
-        console.log('Update successful. Returned record:', updatedRecord);
-
-        if (updatedRecord && updatedRecord.length > 0) {
-            // Update the corresponding item in allData
-            allData = allData.map(item => item.id === editingRowId ? updatedRecord[0] : item);
-            renderTable(allData); // Re-render the table with updated data
-            editFormContainer.style.display = 'none';
-            editingRowId = null;
-            await showMessageBox(`La personne avec l'ID ${updatedRecord[0].id} a été mise à jour.`);
-        } else {
-            throw new Error("Aucune donnée mise à jour retournée par le serveur.");
-        }
-
+        await updatePerson(editingRowId, updatedData);
+        console.log('Update successful for ID:', editingRowId);
+        editFormContainer.style.display = 'none';
+        editingRowId = null; // Reset editing state
+        renderTable(allData); // Re-render table with updated data
     } catch (error) {
-        console.error("Erreur lors de la mise à jour de la personne:", error);
-        errorMessage.textContent = `Erreur lors de la mise à jour: ${error.message}`;
+        console.error("Erreur lors de la sauvegarde des modifications:", error);
+        errorMessage.textContent = `Erreur lors de la sauvegarde: ${error.message}`;
         errorMessage.style.display = 'block';
     }
 });
+
+// Move updatePerson outside the event listener
+async function updatePerson(id, data) {
+    const response = await fetch(`/api/persons/${id}`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(`Erreur lors de la mise à jour: ${response.status} - ${JSON.stringify(error)}`);
+    }
+    const updatedPerson = await response.json();
+    allData = allData.map(item => item.id === id ? updatedPerson : item);
+    await showMessageBox(`La personne avec l'ID ${id} a été mise à jour.`);
+    editFormContainer.style.display = 'none';
+    editingRowId = null;
+    renderTable(allData);
+}
 
 // --- Delete Function ---
 
@@ -360,13 +326,10 @@ saveEditButton.addEventListener('click', async () => {
 async function deletePerson(id) {
     console.log('Attempting to delete person with ID:', id);
     try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/cartes_id?id=eq.${id}`, {
+        const response = await fetch(`/api/persons/${id}`, {
             method: 'DELETE',
             headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=minimal'
+                'Content-Type': 'application/json'
             }
         });
 
