@@ -6,8 +6,34 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    background: linear-gradient(120deg, #e0eafc 0%, #cfdef3 100%);
+    font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
 }
 
 canvas {
     position: absolute;
+}
+.main-container {
+    position: relative;
+    z-index: 1;
+    background: rgba(255,255,255,0.92);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(44, 62, 80, 0.13);
+    padding: 2.5em 2em;
+    max-width: 420px;
+    width: 100%;
+    margin: 2em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+@media (max-width: 600px) {
+    .main-container {
+        padding: 1.2em 0.5em;
+        max-width: 98vw;
+    }
+    body {
+        padding: 0;
+    }
 }

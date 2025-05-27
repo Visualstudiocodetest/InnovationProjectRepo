@@ -1,4 +1,88 @@
-body { font-family: sans-serif; padding: 2em; background: #f4f4f4; }
-input, button, .image-upload { margin: 10px 0; display: block; }
-.image-preview { max-width: 100px; height: auto; margin-top: 5px; border: 1px solid #ccc; }
-pre { background: #fff; padding: 10px; border-radius: 5px; white-space: pre-wrap; }
+body {
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  padding: 2em;
+  background: linear-gradient(120deg, #e0eafc 0%, #cfdef3 100%);
+  min-height: 100vh;
+  color: #222;
+}
+
+h2 {
+  text-align: center;
+  color: #2b5876;
+  margin-bottom: 1.5em;
+  letter-spacing: 1px;
+}
+
+label {
+  font-weight: 600;
+  margin-top: 1em;
+  color: #355c7d;
+  display: block;
+}
+
+input[type="file"] {
+  margin: 8px 0 0 0;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #b2bec3;
+  background: #fff;
+  width: 100%;
+  max-width: 350px;
+  box-sizing: border-box;
+}
+
+button {
+  margin: 2em auto 1em auto;
+  display: block;
+  padding: 12px 32px;
+  background: linear-gradient(90deg, #36d1c4 0%, #5b86e5 100%);
+  color: #fff;
+  border: none;
+  border-radius: 25px;
+  font-size: 1.1em;
+  font-weight: bold;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+  transition: background 0.2s, transform 0.2s;
+}
+button:hover {
+  background: linear-gradient(90deg, #5b86e5 0%, #36d1c4 100%);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.image-preview {
+  max-width: 120px;
+  height: auto;
+  margin-top: 8px;
+  border-radius: 8px;
+  border: 2px solid #b2bec3;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.07);
+  background: #fff;
+  display: block;
+}
+
+pre {
+  background: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.06);
+  border: 1px solid #dfe6e9;
+  font-size: 1em;
+  color: #222;
+  margin-top: 1.5em;
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 1em;
+  }
+  input[type="file"], button {
+    max-width: 100%;
+    width: 100%;
+  }
+  .image-preview {
+    max-width: 90vw;
+  }
+}
