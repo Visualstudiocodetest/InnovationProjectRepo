@@ -200,7 +200,7 @@ let idCardFile;
 
     if (saveResponse.ok) {
       alert(`✅ Données et images enregistrées avec succès !\nNom: ${info.nom}\nPrénoms: ${info.prenoms}\nDate de naissance: ${info.date_naissance}`);
-      window.location.href = "/InnovationProject/list_customers";
+      window.location.href = "/list_customers/index.html"; // Redirection vers la liste des clients
     } else {
       alert("Erreur lors de l'enregistrement des données : " + (saveResult.error || ''));
     }
