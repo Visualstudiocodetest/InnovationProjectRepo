@@ -1,4 +1,4 @@
-    let idCardFile;
+let idCardFile;
     let photo1File;
     let photo2File;
 
@@ -151,85 +151,62 @@
 
 
     async function analyserEtEnregistrer() {
-      if (!idCardFile || !photo1File || !photo2File) {
-        alert("Merci de choisir la carte d'identité et les deux photos de la personne.");
-        return;
-      }
+  if (!idCardFile || !photo1File || !photo2File) {
+    alert("Merci de choisir la carte d'identité et les deux photos de la personne.");
+    return;
+  }
 
-      const resultDiv = document.getElementById('output');
-      resultDiv.textContent = 'Processing...';
+  const resultDiv = document.getElementById('output');
+  resultDiv.textContent = 'Processing...';
 
-      try {
-        const formData = new FormData();
-        formData.append('file', idCardFile);
-        formData.append('apikey', API_KEY);
-        formData.append('language', 'fre');
-        formData.append('isOverlayRequired', 'false');
-        formData.append('OCREngine', '1'); // Using engine 2 for better results
+  try {
+    // 1. OCR: Send the ID card image to Flask backend for OCR
+    const ocrFormData = new FormData();
+    ocrFormData.append('file', idCardFile);
 
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          body: formData
-        });
+    const ocrResponse = await fetch('/api/ocr', {
+      method: 'POST',
+      body: ocrFormData
+    });
 
-        const data = await response.json();
+    const ocrData = await ocrResponse.json();
 
-        if (data.IsErroredOnProcessing) {
-          resultDiv.textContent = 'Error OCR: ' + data.ErrorMessage;
-          return;
-        }
-
-        const extractedText = data.ParsedResults[0].ParsedText;
-        resultDiv.textContent = extractedText;
-
-        // Extract only the needed information
-        const info = extractInfoFromOCR(extractedText);
-
-        // Display extracted info
-        console.log("Extracted Info:", info);
-
-        // Upload images to Supabase Storage
-        const idCardFileName = `id_card_${Date.now()}_${idCardFile.name}`;
-        const photo1FileName = `photo1_${Date.now()}_${photo1File.name}`;
-        const photo2FileName = `photo2_${Date.now()}_${photo2File.name}`;
-
-        const idCardImageUrl = await uploadImage(idCardFile, idCardFileName);
-        const photo1ImageUrl = await uploadImage(photo1File, photo1FileName);
-        const photo2ImageUrl = await uploadImage(photo2File, photo2FileName);
-
-        if (idCardImageUrl && photo1ImageUrl && photo2ImageUrl) {
-          // 💾 Enregistrement dans Supabase Database avec les URLs des images
-          const { error } = await supabaseClient
-            .from("cartes_id")
-            .insert([{
-              nom: info.nom,
-              prenom: info.prenoms,
-              date_naissance: info.date_naissance,
-              url_id_card: idCardImageUrl,
-              photo1_url: photo1ImageUrl,
-              photo2_url: photo2ImageUrl
-            }]);
-
-          if (error) {
-            alert("Erreur lors de l'enregistrement des données : " + error.message);
-          } else {
-            alert(`✅ Données et images enregistrées avec succès !
-                    Nom: ${info.nom}
-                    Prénoms: ${info.prenoms}
-                    Date de naissance: ${info.date_naissance}
-                    URL Carte d'Identité: ${idCardImageUrl}
-                    URL Photo 1: ${photo1ImageUrl}
-                    URL Photo 2: ${photo2ImageUrl}`);
-          }
-        } else {
-          alert("Erreur lors de l'upload des images. Les données n'ont pas été enregistrées.");
-        }
-
-      } catch (error) {
-        resultDiv.textContent = 'Error: ' + error.message;
-        console.error(error);
-      }
-
-      //redirection vers la liste des personnes
-        window.location.href = "/InnovationProject/list_customers";
+    if (ocrData.IsErroredOnProcessing) {
+      resultDiv.textContent = 'Error OCR: ' + ocrData.ErrorMessage;
+      return;
     }
+
+    const extractedText = ocrData.ParsedResults[0].ParsedText;
+    resultDiv.textContent = extractedText;
+
+    // 2. Extract info
+    const info = extractInfoFromOCR(extractedText);
+
+    // 3. Send all data and files to Flask backend for storage and DB
+    const formData = new FormData();
+    formData.append('id_card', idCardFile);
+    formData.append('photo1', photo1File);
+    formData.append('photo2', photo2File);
+    formData.append('nom', info.nom);
+    formData.append('prenoms', info.prenoms);
+    formData.append('date_naissance', info.date_naissance);
+
+    const saveResponse = await fetch('/api/persons', {
+      method: 'POST',
+      body: formData
+    });
+
+    const saveResult = await saveResponse.json();
+
+    if (saveResponse.ok) {
+      alert(`✅ Données et images enregistrées avec succès !\nNom: ${info.nom}\nPrénoms: ${info.prenoms}\nDate de naissance: ${info.date_naissance}`);
+      window.location.href = "/InnovationProject/list_customers";
+    } else {
+      alert("Erreur lors de l'enregistrement des données : " + (saveResult.error || ''));
+    }
+
+  } catch (error) {
+    resultDiv.textContent = 'Error: ' + error.message;
+    console.error(error);
+  }
+}

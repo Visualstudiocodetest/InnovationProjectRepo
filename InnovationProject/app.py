@@ -3,6 +3,7 @@ import requests
 from flask import Flask, request, jsonify, send_from_directory, render_template
 from dotenv import load_dotenv
 from supabase import create_client, Client
+from werkzeug.utils import secure_filename
 
 load_dotenv()
 
@@ -11,7 +12,7 @@ key: str = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 
 SUPABASE_TABLE = "cartes_id"
-OCR_API_KEY = os.getenv("OCR_API_KEY")
+OCR_API_KEY = os.getenv("API_KEY_OCR")
 OCR_API_URL = "https://api.ocr.space/parse/image"
 
 app = Flask(__name__, static_folder=None)
@@ -31,13 +32,70 @@ def api_list_persons():
 # --- API: Add a person () ---
 @app.route("/api/persons", methods=["POST"])
 def api_add_person():
-    response = (
-    supabase.table(SUPABASE_TABLE)
-    .insert()
-    .execute()
-    )
+    nom = request.form.get("nom")
+    prenoms = request.form.get("prenoms")
+    date_naissance = request.form.get("date_naissance")
+    id_card_file = request.files.get("id_card")
+    photo1_file = request.files.get("photo1")
+    photo2_file = request.files.get("photo2")
 
-    return response.data, 201
+
+    import time
+    ts = str(int(time.time() * 1000))
+    id_card_filename = f"id_card_{ts}_{secure_filename(id_card_file.filename)}"
+    photo1_filename = f"photo1_{ts}_{secure_filename(photo1_file.filename)}"
+    photo2_filename = f"photo2_{ts}_{secure_filename(photo2_file.filename)}"
+
+    bucket = "photos-identite"
+    try:
+        id_card_file.stream.seek(0)
+        id_card_bytes = id_card_file.read()
+        photo1_file.stream.seek(0)
+        photo1_bytes = photo1_file.read()
+        photo2_file.stream.seek(0)
+        photo2_bytes = photo2_file.read()
+
+        id_card_upload = supabase.storage.from_(bucket).upload(
+            id_card_filename,
+            id_card_bytes,
+            {"content-type": id_card_file.mimetype}
+        )
+        photo1_upload = supabase.storage.from_(bucket).upload(
+            photo1_filename,
+            photo1_bytes,
+            {"content-type": photo1_file.mimetype}
+        )
+        photo2_upload = supabase.storage.from_(bucket).upload(
+            photo2_filename,
+            photo2_bytes,
+            {"content-type": photo2_file.mimetype}
+        )
+    except Exception as e:
+        return jsonify({"error": f"Erreur upload: {str(e)}"}), 500
+
+    # Get signed URLs
+    id_card_url = supabase.storage.from_(bucket).create_signed_url(id_card_filename, 6000000000).get("signedURL")
+    photo1_url = supabase.storage.from_(bucket).create_signed_url(photo1_filename, 6000000000).get("signedURL")
+    photo2_url = supabase.storage.from_(bucket).create_signed_url(photo2_filename, 6000000000).get("signedURL")
+
+    # Insert into Supabase Database
+    try:
+        response = (
+            supabase.table(SUPABASE_TABLE)
+            .insert({
+                "nom": nom,
+                "prenom": prenoms,
+                "date_naissance": date_naissance,
+                "url_id_card": id_card_url,
+                "photo1_url": photo1_url,
+                "photo2_url": photo2_url
+            })
+            .execute()
+        )
+    except Exception as e:
+        return jsonify({"error": f"Erreur DB: {str(e)}"}), 500
+
+    return jsonify({"success": True}), 201
 
 # --- API: Edit a person ---
 @app.route("/api/persons/<int:person_id>", methods=["PATCH"])
@@ -116,11 +174,13 @@ def api_persons_name_images():
     )
     return response.data, 200
 
-@app.route('/api/storage/create_signed_url60', methods=['POST'])
+@app.route('/api/storage/create_signed_url190', methods=['POST'])
 def api_create_signed_url():
+
     data = request.json
-    response = supabase.storage.from_("photos-identite").create_signed_url(data["path"], 60)
+    response = supabase.storage.from_("photos-identite").create_signed_url(data, 6000000000)
     return response.data, 200
+
 
 if __name__ == "__main__":
     app.run(debug=True)
