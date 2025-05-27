@@ -191,6 +191,22 @@ let idCardFile;
     formData.append('prenoms', info.prenoms);
     formData.append('date_naissance', info.date_naissance);
 
+    if (info.date_naissance) {
+      const [day, month, year] = info.date_naissance.split('/').map(Number);
+      const birthDate = new Date(year, month - 1, day);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      if (age < 18) {
+        alert("La personne doit avoir au moins 18 ans.");
+        resultDiv.textContent = '';
+        return;
+      }
+    }
+
     const saveResponse = await fetch('/api/persons', {
       method: 'POST',
       body: formData
