@@ -47,57 +47,30 @@ document.addEventListener('DOMContentLoaded', () => {
       const { nom, photo1_url, photo2_url } = person;
       const descriptions = [];
 
-    try {
-      const signedUrls = [];
+      // Fetch both images and compute face descriptors
+      const imageUrls = [photo1_url, photo2_url].filter(Boolean);
 
-      if (photo1_url) {
-        const path = photo1_url.split("/").slice(-1)[0]; // extrait le nom du fichier
-        const { data: signed1, error: err1 } = await supabase
-          .storage
-          .from('photos-identite')
-          .createSignedUrl(path, 60); // 60 secondes
-
-        if (!err1) {
-          signedUrls.push(signed1.signedUrl);
-        }
-      }
-
-      if (photo2_url) {
-        const path = photo2_url.split("/").slice(-1)[0]; // extrait le nom du fichier
-        const { data: signed2, error: err2 } = await supabase
-          .storage
-          .from('photos-identite')
-          .createSignedUrl(path, 60);
-
-        if (!err2) {
-          signedUrls.push(signed2.signedUrl);
-        }
-      }
-
-      for (const url of signedUrls) {
+      for (const url of imageUrls) {
+      try {
         const img = await faceapi.fetchImage(url);
         const detection = await faceapi
-          .detectSingleFace(img)
-          .withFaceLandmarks()
-          .withFaceDescriptor();
-
-        if (detection) {
-          descriptions.push(detection.descriptor);
+        .detectSingleFace(img)
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+        if (detection && detection.descriptor) {
+        descriptions.push(detection.descriptor);
         }
+      } catch (err) {
+        console.error(`Error processing image for ${nom}:`, err);
+      }
       }
 
       if (descriptions.length > 0) {
-        labeledFaceDescriptors.push(
-          new faceapi.LabeledFaceDescriptors(nom, descriptions)
-        );
-      } else {
-        console.warn(`Aucun visage détecté pour ${nom}`);
+      labeledFaceDescriptors.push(
+        new faceapi.LabeledFaceDescriptors(nom, descriptions)
+      );
       }
-
-    } catch (error) {
-      console.error(`Erreur lors du traitement des images pour ${nom}:`, error);
     }
-  }
 
   return labeledFaceDescriptors;
 }
