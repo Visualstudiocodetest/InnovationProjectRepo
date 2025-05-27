@@ -1,11 +1,3 @@
-// ⚙️ Config Supabase
-    const SUPABASE_URL = "https://ayrljfcrhcvhexfdbjln.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5cmxqZmNyaGN2aGV4ZmRiamxuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NjUxOTc3NiwiZXhwIjoyMDYyMDk1Nzc2fQ.dKfQ2E23n4DOw6qc9vksbxuJxoGxSyEfVw-NS6Rly9o";
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const API_KEY = 'K84044132288957';
-    const API_URL = 'https://api.ocr.space/parse/image';
-    const BUCKET_NAME = 'photos-identite';
-
     let idCardFile;
     let photo1File;
     let photo2File;
@@ -55,7 +47,7 @@
       }
     });
 
-    function extractInfoFromOCR(ocrText) {
+  function extractInfoFromOCR(ocrText) {
   const lines = ocrText.split('\n');
   let nom = '';
   let prenoms = '';
@@ -121,7 +113,7 @@
   };
 }
 
-    async function uploadImage(file, imageName) {
+  async function uploadImage(file, imageName) {
   try {
     const { data, error } = await supabaseClient
       .storage
@@ -137,11 +129,11 @@
       return null;
     }
 
-    // Génère une URL signée valable 60 secondes
+    // Génère une URL signée valable 190 ans (6000000000 secondes)
     const { data: signedUrlData, error: signedUrlError } = await supabaseClient
       .storage
       .from(BUCKET_NAME)
-      .createSignedUrl(data.path, 60000000000000000000); // 60 secondes de validité
+      .createSignedUrl(data.path, 6000000000 ) // 190 ans
 
     if (signedUrlError) {
       console.error("Erreur lors de la création de l'URL signée:", signedUrlError);

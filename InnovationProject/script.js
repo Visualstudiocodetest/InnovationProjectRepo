@@ -2,9 +2,6 @@ const video = document.getElementById("video");
 
 // Wait for the DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', () => {
-  const SUPABASE_URL = "https://ayrljfcrhcvhexfdbjln.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5cmxqZmNyaGN2aGV4ZmRiamxuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NjUxOTc3NiwiZXhwIjoyMDYyMDk1Nzc2fQ.dKfQ2E23n4DOw6qc9vksbxuJxoGxSyEfVw-NS6Rly9o";
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   Promise.all([
     faceapi.nets.ssdMobilenetv1.loadFromUri("./models"),
@@ -27,20 +24,28 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function getLabeledFaceDescriptionsFromSupabase() {
-  const { data, error } = await supabase
-    .from('cartes_id')
-    .select("nom, photo1_url, photo2_url");
+    let data = [];
+    let error = null;
+    try {
+      const response = await fetch("api/persons/name_images");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      data = await response.json();
+      if (!Array.isArray(data)) {
+        data = [];
+      }
+    } catch (err) {
+      error = err;
+      console.error("Erreur lors de la récupération des données:", error);
+      return [];
+    }
 
-  if (error) {
-    console.error("Erreur lors de la récupération des données Supabase:", error);
-    return [];
-  }
+    const labeledFaceDescriptors = [];
 
-  const labeledFaceDescriptors = [];
-
-  for (const person of data) {
-    const { nom, photo1_url, photo2_url } = person;
-    const descriptions = [];
+    for (const person of data) {
+      const { nom, photo1_url, photo2_url } = person;
+      const descriptions = [];
 
     try {
       const signedUrls = [];

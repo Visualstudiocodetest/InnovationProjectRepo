@@ -107,15 +107,20 @@ def serve_list_customers(filename):
 def serve_details(filename):
     return send_from_directory('details', filename)
 
-# Serve models directory
-@app.route('/models/<path:filename>')
-def serve_models(filename):
-    return send_from_directory('models', filename)
+@app.route('/api/persons/name_images')
+def api_persons_name_images():
+    response = (
+    supabase.table(SUPABASE_TABLE)
+    .select("nom", "photo1_url", "photo2_url", "url_id_card")
+    .execute()
+    )
+    return response.data, 200
 
-# --- (Optional) API: Upload image to Supabase Storage ---
-# You can implement this if you want to upload images from Python as well.
-
-
+@app.route('/api/storage/create_signed_url60', methods=['POST'])
+def api_create_signed_url():
+    data = request.json
+    response = supabase.storage.from_("photos-identite").create_signed_url(data["path"], 60)
+    return response.data, 200
 
 if __name__ == "__main__":
     app.run(debug=True)
