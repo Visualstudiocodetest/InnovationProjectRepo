@@ -22,11 +22,14 @@ app = Flask(__name__, static_folder=None)
 # --- API: List all persons ---
 @app.route("/api/persons", methods=["GET"])
 def api_list_persons():
-    response = (
-    supabase.table(SUPABASE_TABLE)
-    .select("*")
-    .execute())
-
+    name = request.args.get("name")
+    person_id = request.args.get("id")
+    query = supabase.table(SUPABASE_TABLE).select("*")
+    if person_id:
+        query = query.eq("id", person_id)
+    if name:
+        query = query.ilike("nom", name)  # Use ilike for case-insensitive match
+    response = query.execute()
     return jsonify(response.data), 200
 
 # --- API: Add a person () ---

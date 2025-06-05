@@ -31,7 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      data = await response.json();
+      const text = await response.text();
+      data = JSON.parse(text);
       if (!Array.isArray(data)) {
         data = [];
       }
@@ -115,7 +116,14 @@ document.addEventListener('DOMContentLoaded', () => {
             y >= labelY - textHeight &&
             y <= labelY
           ) {
-            window.open(`https://www.example.com/${name}`, "_blank"); // Open the URL in a new tab
+            const person = labeledFaceDescriptors.find(p => p.label === name);
+            let url;
+            if (person && person.id) {
+              url = `/details/index.html?id=${encodeURIComponent(person.id)}`;
+            } else {
+              url = `/details/index.html?name=${encodeURIComponent(name)}`;
+            }
+            window.open(url, '_blank');
           }
         });
       }
