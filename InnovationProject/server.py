@@ -27,7 +27,7 @@ def api_list_persons():
     .select("*")
     .execute())
 
-    return response.data, 200
+    return jsonify(response.data), 200
 
 # --- API: Add a person () ---
 @app.route("/api/persons", methods=["POST"])
@@ -107,7 +107,7 @@ def api_edit_person(person_id):
         .eq("id", person_id)
         .execute()
     )
-    return response.data, 200
+    return jsonify(response.data), 200
 
     
 
@@ -120,7 +120,7 @@ def api_delete_person(person_id):
         .eq("id", person_id)
         .execute()
     )
-    return response.data, 200
+    return jsonify(response.data), 200
     
 
 # --- API: OCR endpoint (proxy to OCR.space) ---
@@ -179,7 +179,7 @@ def api_create_signed_url():
 
     data = request.json
     response = supabase.storage.from_("photos-identite").create_signed_url(data, 6000000000)
-    return response.data, 200
+    return jsonify(response.data), 200
 
 
 if __name__ == "__main__":
