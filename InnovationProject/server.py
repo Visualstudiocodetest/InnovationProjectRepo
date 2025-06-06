@@ -175,7 +175,7 @@ def api_persons_name_images():
     .select("nom", "photo1_url", "photo2_url", "url_id_card")
     .execute()
     )
-    return response.data, 200
+    return jsonify(response.data), 200
 
 @app.route('/api/storage/create_signed_url190', methods=['POST'])
 def api_create_signed_url():
