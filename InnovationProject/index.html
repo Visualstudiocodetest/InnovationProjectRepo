@@ -13,6 +13,14 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <video id="video" width="600" height="450" autoplay>
+  <video id="video" width="100%" height="100%" autoplay></video>
+  <button id="add-person-btn" class="floating-action-btn" title="Ajouter une personne">
+    +
+  </button>
+  <script>
+    document.getElementById('add-person-btn').onclick = function() {
+      window.location.href = '/add_person/index.html';
+    };
+  </script>
 </body>
 </html>

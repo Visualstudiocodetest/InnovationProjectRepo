@@ -74,6 +74,34 @@ pre {
   margin-top: 1.5em;
 }
 
+/* Navigation Banner Styles */
+.main-nav {
+  width: 100vw;
+  background: linear-gradient(90deg, #36d1c4 0%, #5b86e5 100%);
+  padding: 0.7em 0;
+  display: flex;
+  justify-content: center;
+  gap: 2em;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.main-nav a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.1em;
+  letter-spacing: 0.5px;
+  padding: 0.3em 1em;
+  border-radius: 18px;
+  transition: background 0.2s, color 0.2s;
+}
+.main-nav a:hover, .main-nav a.active {
+  background: rgba(255,255,255,0.18);
+  color: #222;
+}
+
 @media (max-width: 600px) {
   body {
     padding: 1em;

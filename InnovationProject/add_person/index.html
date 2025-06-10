@@ -8,6 +8,13 @@
 </head>
 <body>
 
+  <!-- Navigation Banner -->
+  <nav class="main-nav">
+    <a href="/index.html">Accueil</a>
+    <a href="/add_person/index.html">Ajouter une personne</a>
+    <a href="/list_customers/index.html">Liste des clients</a>
+  </nav>
+
   <h2>Uploader les Informations d'Identité</h2>
 
   <label for="id-card-input">Carte d'Identité (Recto):</label>
@@ -23,9 +30,6 @@
   <img id="photo2-preview" src="#" alt="Aperçu Photo 2" class="image-preview" style="display:none;">
 
   <button onclick="analyserEtEnregistrer()">Analyser et Enregistrer</button>
-
-  <h3>Texte extrait de la Carte d'Identité :</h3>
-  <pre id="output">Aucun texte pour l'instant…</pre>
 
   <script src="script.js"></script>
 </body>

@@ -37,3 +37,30 @@ canvas {
         padding: 0;
     }
 }
+
+/* Floating Action Button for Add Person */
+.floating-action-btn {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #36d1c4 0%, #5b86e5 100%);
+  color: #fff;
+  border: none;
+  font-size: 2.2em;
+  box-shadow: 0 4px 16px rgba(44, 62, 80, 0.18);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0.85;
+  transition: background 0.2s, opacity 0.2s, transform 0.1s;
+}
+.floating-action-btn:hover {
+  background: linear-gradient(135deg, #5b86e5 0%, #36d1c4 100%);
+  opacity: 1;
+  transform: scale(1.07);
+}
