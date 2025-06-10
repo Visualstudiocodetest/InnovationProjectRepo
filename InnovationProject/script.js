@@ -147,6 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return faceMatcher.findBestMatch(d.descriptor);
       });
 
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
       results.forEach((result, i) => {
         const box = resizedDetections[i].detection.box;
         const label = result.toString();
@@ -157,7 +159,6 @@ document.addEventListener('DOMContentLoaded', () => {
         drawBox.draw(canvas);
 
         // Draw the label (as a visual cue for the clickable area) below the box
-        const ctx = canvas.getContext("2d");
         ctx.font = "14px Arial";
         ctx.fillStyle = "white";
         const text = name; // Use the name here
@@ -180,3 +181,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 100);
   });
 });
+
