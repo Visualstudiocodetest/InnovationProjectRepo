@@ -96,7 +96,10 @@ addPersonButton.addEventListener('click', () => {
 async function fetchData() {
     fetch('/api/persons')
     .then(res => res.json())
-    .then(data => renderTable(data));
+    .then(data => {
+        allData = data; // <-- Fix: update global data
+        renderTable(data);
+    });
 }
 
 /**
