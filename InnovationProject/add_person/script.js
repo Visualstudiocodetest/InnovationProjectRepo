@@ -156,9 +156,6 @@ let idCardFile;
     return;
   }
 
-  const resultDiv = document.getElementById('output');
-  resultDiv.textContent = 'Processing...';
-
   try {
     // 1. OCR: Send the ID card image to Flask backend for OCR
     const ocrFormData = new FormData();
@@ -171,13 +168,10 @@ let idCardFile;
 
     const ocrData = await ocrResponse.json();
 
-    if (ocrData.IsErroredOnProcessing) {
-      resultDiv.textContent = 'Error OCR: ' + ocrData.ErrorMessage;
-      return;
-    }
+    
 
     const extractedText = ocrData.ParsedResults[0].ParsedText;
-    resultDiv.textContent = extractedText;
+    
 
     // 2. Extract info
     const info = extractInfoFromOCR(extractedText);
@@ -202,7 +196,6 @@ let idCardFile;
       }
       if (age < 18) {
         alert("La personne doit avoir au moins 18 ans.");
-        resultDiv.textContent = '';
         return;
       }
     }
@@ -222,7 +215,6 @@ let idCardFile;
     }
 
   } catch (error) {
-    resultDiv.textContent = 'Error: ' + error.message;
-    console.error(error);
+    alert("Erreur inattendue : " + error.message);
   }
 }
