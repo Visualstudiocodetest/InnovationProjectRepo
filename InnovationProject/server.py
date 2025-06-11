@@ -112,7 +112,7 @@ def api_edit_person(person_id):
     )
     return jsonify(response.data), 200
 
-    
+
 
 # --- API: Delete a person ---
 @app.route("/api/persons/<int:person_id>", methods=["DELETE"])
@@ -183,6 +183,11 @@ def api_create_signed_url():
     data = request.json
     response = supabase.storage.from_("photos-identite").create_signed_url(data, 6000000000)
     return jsonify(response.data), 200
+
+    
+@app.route("/rgpd", methods=["GET"])
+def rgpd():
+    return send_from_directory('.', 'rgpd.html')
 
 
 if __name__ == "__main__":

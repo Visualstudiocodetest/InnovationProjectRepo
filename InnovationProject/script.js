@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Draw the label (as a visual cue for the clickable area) below the box
         ctx.font = "14px Arial";
-        ctx.fillStyle = "white";
+        ctx.fillStyle = (name.toLowerCase() === "unknown") ? "red" : "white"; // <-- Ajout couleur rouge si unknown
         const text = name; // Use the name here
         const textMetrics = ctx.measureText(text);
         const textWidth = textMetrics.width;

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RGPD - Innovation Project Casino</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+    header, section {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      color: #333;
+    }
+    ul {
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Protection des Données Personnelles (RGPD)</h1>
+    <p>Dans le cadre du projet développé en cours d'Innovation Project, nous mettons un point d'honneur à respecter la réglementation sur la protection des données personnelles.</p>
+  </header>
+
+  <section>
+    <h2>Contexte du projet</h2>
+    <p>Le projet a été créé dans le cadre du cours "Innovation Project", dont l'objectif est de nous initier à la création et au développement d'un projet innovant. Ce cours encourage les étudiants à identifier un problème concret et à proposer une solution technologique pertinente et créative.</p>
+  </section>
+
+  <section>
+    <h2>Objectifs du projet</h2>
+    <p>Notre objectif est de simplifier et de moderniser l'enregistrement des clients dans un casino grâce à des technologies telles que la reconnaissance faciale et la lecture automatique de pièces d'identité. Nous visons à digitaliser une partie du processus de sécurité tout en améliorant l'efficacité du contrôle d'accès.</p>
+  </section>
+
+  <section>
+    <h2>Problématique adressée</h2>
+    <p>Dans un environnement comme celui d'un casino, il est difficile de surveiller en temps réel tous les individus présents. La vérification de l'âge, l'identification rapide d'un tricheur ou d'un perturbateur, et l'enregistrement efficace des clients représentent des défis majeurs. Ce projet répond à ces problématiques en automatisant une partie du processus d'identification et de surveillance.</p>
+  </section>
+
+  <section>
+    <h2>Répartition des rôles</h2>
+    <ul>
+      <li>Reconnaissance faciale à partir de la webcam pour identifier les visages</li>
+      <li>Lecture des cartes d'identité françaises via OCR (recto uniquement)</li>
+      <li>Enregistrement automatique dans Supabase des données extraites et de la photo</li>
+      <li>Affichage des profils clients via URL directe</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Interface utilisateur</h2>
+    <p>L’interface est minimaliste, composée :</p>
+    <ul>
+      <li>D’une vidéo en direct depuis la webcam</li>
+      <li>De reconnaissance faciale en temps réel avec actions automatiques</li>
+      <li>D’un accès à la liste des utilisateurs via une URL spécifique</li>
+    </ul>
+    <p>Un bandeau de navigation est prévu pour améliorer l’ergonomie.</p>
+  </section>
+
+  <section>
+    <h2>Sécurité & stockage</h2>
+    <ul>
+      <li>Accès à l'API Supabase sécurisé avec clé de service non exposée</li>
+      <li>Images stockées dans un bucket privé avec URLs temporaires</li>
+      <li>Données personnelles stockées dans une table <code>cartes_id</code>, liées à une image sécurisée</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Contact & assistance</h2>
+    <p>Conformément au RGPD, vous pouvez à tout moment :</p>
+    <ul>
+      <li>Demander la suppression de vos données</li>
+      <li>Modifier vos informations personnelles</li>
+      <li>Obtenir de l'aide concernant vos données</li>
+    </ul>
+    <p>Pour toute demande, veuillez nous contacter à l'adresse suivante : <a href="mailto:support-projetcasino@example.com">support-projetcasino@example.com</a></p>
+  </section>
+
+  <footer>
+    <p>Ce projet est encore en développement. Le respect de la vie privée et la conformité au RGPD font partie intégrante de notre démarche.</p>
+  </footer>
+</body>
+</html>
